@@ -1,0 +1,8 @@
+api/
+app/
+ml/
+trained_models/
+requirements*.txt
+docker-compose.yml
+train_model.py
+run.py
