@@ -7,13 +7,14 @@ import joblib
 import numpy as np
 
 from ml.feature_engineering import FeatureEngineer
+from app.config import PROJECT_ROOT, settings
 
 
 class ReturnPredictor:
     """Loads trained artefacts and scores individual or batch orders."""
 
-    def __init__(self, model_dir: str = "trained_models") -> None:
-        self.model_dir = Path(model_dir)
+    def __init__(self, model_dir: str | None = None) -> None:
+        self.model_dir = PROJECT_ROOT / (model_dir or settings.model_dir)
         self.model: Any = None
         self.fe: FeatureEngineer | None = None
         self.model_info: dict = {}

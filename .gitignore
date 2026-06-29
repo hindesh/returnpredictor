@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.DS_Store
+
+# Keep trained_models tracked for Vercel deployment
+# (remove the lines below if you use Vercel Blob instead)
+# trained_models/*.pkl
+# trained_models/*.json

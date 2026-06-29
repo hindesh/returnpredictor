@@ -6,13 +6,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.config import settings
+from app.config import PROJECT_ROOT, settings
 from app.database import Base, engine
 from app.ml.predictor import predictor
 from app.ml.explainer import explainer
 from app.routers import health, orders, predict
 
-_STATIC = Path(__file__).parent / "static"
+_STATIC = PROJECT_ROOT / "app" / "static"
 
 
 @asynccontextmanager

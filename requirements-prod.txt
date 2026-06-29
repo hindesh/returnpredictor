@@ -1,0 +1,15 @@
+# Production inference only — no xgboost/lightgbm/tabulate (training-only)
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+sqlalchemy==2.0.35
+psycopg2-binary==2.9.9
+pydantic==2.9.2
+pydantic-settings==2.5.2
+python-dotenv==1.0.1
+aiofiles==23.2.1
+catboost==1.2.7
+shap==0.46.0
+pandas==2.2.3
+numpy==1.26.4
+joblib==1.4.2
+scikit-learn==1.5.2
