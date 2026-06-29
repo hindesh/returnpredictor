@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReturnShield — Returns Decision Engine</title>
+<style>
+:root {
+  --low:     #10B981;
+  --medium:  #F59E0B;
+  --high:    #EF4444;
+  --primary: #4F46E5;
+  --bg:      #F8FAFC;
+  --card:    #FFFFFF;
+  --text:    #0F172A;
+  --muted:   #64748B;
+  --border:  #E2E8F0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+header{
+  background:linear-gradient(135deg,#1E1B4B 0%,#312E81 100%);
+  color:white;padding:1rem 2rem;
+  display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 2px 12px rgba(0,0,0,.25);
+}
+.logo{display:flex;align-items:center;gap:.75rem}
+.logo h1{font-size:1.4rem;font-weight:800;letter-spacing:-.02em}
+.logo p{font-size:.78rem;opacity:.6;margin-top:.1rem}
+.header-badge{background:rgba(255,255,255,.15);padding:.25rem .9rem;border-radius:999px;font-size:.7rem;letter-spacing:.06em;font-weight:600}
+
+main{max-width:1160px;margin:1.75rem auto;padding:0 1.25rem;display:grid;grid-template-columns:380px 1fr;gap:1.25rem;align-items:start}
+
+.card{background:var(--card);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 4px 20px rgba(0,0,0,.05);overflow:hidden}
+.card-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-header h2{font-size:.7rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.card-body{padding:1.25rem}
+
+/* Scenarios */
+.scenario-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:1.1rem}
+.sc-btn{padding:.45rem .5rem;border:1.5px solid var(--border);border-radius:8px;background:transparent;cursor:pointer;font-size:.72rem;font-weight:600;color:var(--muted);transition:all .15s;text-align:center}
+.sc-btn.active{border-color:var(--primary);color:var(--primary);background:#EEF2FF}
+
+/* Form */
+.sec-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94A3B8;margin:1rem 0 .6rem;display:flex;align-items:center;gap:.5rem}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:.65rem}
+.fg label{display:block;font-size:.68rem;font-weight:600;color:var(--muted);margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.04em}
+input,select{width:100%;padding:.55rem .65rem;border:1.5px solid var(--border);border-radius:7px;font-size:.85rem;background:white;outline:none;transition:border-color .15s}
+input:focus,select:focus{border-color:var(--primary)}
+
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:.4rem 0}
+.toggle-label{font-size:.85rem}
+.tog{width:40px;height:22px;background:var(--border);border-radius:11px;cursor:pointer;transition:background .2s;position:relative;flex-shrink:0}
+.tog.on{background:var(--primary)}
+.tog::after{content:'';width:16px;height:16px;background:white;border-radius:50%;position:absolute;top:3px;left:3px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.tog.on::after{transform:translateX(18px)}
+
+.btn-analyze{width:100%;padding:.8rem;background:linear-gradient(135deg,var(--primary),#6366F1);color:white;border:none;border-radius:9px;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:1.25rem;transition:opacity .15s,transform .1s;letter-spacing:.02em}
+.btn-analyze:hover{opacity:.9;transform:translateY(-1px)}
+.btn-analyze:active{transform:translateY(0)}
+.btn-analyze:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+/* Results placeholder */
+.placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:420px;color:var(--muted);gap:.75rem}
+.placeholder .ico{font-size:3rem;opacity:.25}
+.placeholder p{font-size:.9rem}
+
+/* Gauge */
+.gauge-section{display:flex;flex-direction:column;align-items:center;padding:1.5rem 1rem 1.25rem;border-bottom:1px solid var(--border)}
+.gauge-wrap{position:relative;width:190px;height:105px}
+.gauge-wrap svg{overflow:visible}
+.gauge-text{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);text-align:center}
+.gauge-pct{font-size:2.4rem;font-weight:800;line-height:1}
+.risk-badge{display:inline-block;padding:.28rem .9rem;border-radius:999px;font-size:.75rem;font-weight:700;letter-spacing:.07em;margin-top:.7rem}
+.risk-low {background:#DCFCE7;color:#166534}
+.risk-med {background:#FEF3C7;color:#92400E}
+.risk-high{background:#FEE2E2;color:#991B1B}
+.cost-pill{margin-top:.55rem;font-size:.82rem;color:var(--muted)}
+.cost-pill strong{color:var(--text)}
+
+/* Factors */
+.section{padding:1.1rem 1.25rem;border-bottom:1px solid var(--border)}
+.section-title{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.9rem}
+.factor-row{display:flex;align-items:center;gap:.6rem;margin-bottom:.65rem}
+.factor-name{font-size:.75rem;color:var(--muted);width:160px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-wrap{flex:1;height:7px;background:#F1F5F9;border-radius:4px;overflow:hidden}
+.bar{height:100%;border-radius:4px;width:0;transition:width .85s cubic-bezier(.4,0,.2,1)}
+.bar.up{background:var(--high)}
+.bar.down{background:var(--low)}
+.factor-val{font-size:.72rem;font-weight:700;width:42px;text-align:right;flex-shrink:0}
+
+/* Recs */
+.recs-section{padding:1.1rem 1.25rem}
+.rec-item{display:flex;gap:.65rem;align-items:flex-start;margin-bottom:.7rem;font-size:.83rem;line-height:1.55}
+.rec-num{width:20px;height:20px;border-radius:50%;background:#EEF2FF;color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:.65rem;flex-shrink:0;margin-top:.15rem;font-weight:700}
+
+/* Model meta */
+.model-meta{padding:.65rem 1.25rem;background:#F8FAFC;border-top:1px solid var(--border);display:flex;justify-content:space-between}
+.model-meta span{font-size:.7rem;color:var(--muted)}
+
+/* Sim banner */
+.sim-banner{background:#FFFBEB;border:1px solid #FDE68A;border-radius:7px;padding:.45rem .75rem;font-size:.72rem;color:#92400E;margin:0 1.25rem 0}
+
+/* Spinner */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .65s linear infinite;display:inline-block;vertical-align:middle;margin-right:.4rem}
+
+@media(max-width:860px){main{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span style="font-size:1.6rem">🛡️</span>
+    <div>
+      <h1>ReturnShield</h1>
+      <p>Intelligent Returns Decision Engine</p>
+    </div>
+  </div>
+  <div class="header-badge">ML · SHAP · CatBoost</div>
+</header>
+
+<main>
+
+  <!-- ── LEFT: Input ── -->
+  <div class="card">
+    <div class="card-header">
+      <h2>Order Parameters</h2>
+      <span style="font-size:.7rem;color:#94A3B8">Pre-filled demo</span>
+    </div>
+    <div class="card-body">
+
+      <div class="sec-label" style="margin-top:0">Scenario</div>
+      <div class="scenario-bar">
+        <button class="sc-btn active" onclick="loadScenario('high',this)">🔴 High Risk</button>
+        <button class="sc-btn"        onclick="loadScenario('medium',this)">🟡 Medium</button>
+        <button class="sc-btn"        onclick="loadScenario('low',this)">🟢 Low Risk</button>
+      </div>
+
+      <div class="sec-label">Customer</div>
+      <div class="row2">
+        <div class="fg"><label>Account Age (days)</label><input type="number" id="customer_age_days"></div>
+        <div class="fg"><label>Return Rate (%)</label><input type="number" id="customer_return_rate" min="0" max="100"></div>
+      </div>
+      <div class="row2">
+        <div class="fg"><label>Total Orders</label><input type="number" id="customer_total_orders" min="1"></div>
+        <div class="fg"><label>Avg Order Value ($)</label><input type="number" id="customer_avg_order_value" min="1"></div>
+      </div>
+
+      <div class="sec-label">Product</div>
+      <div class="row2">
+        <div class="fg">
+          <label>Category</label>
+          <select id="product_category">
+            <option>Electronics</option><option>Clothing</option><option>Shoes</option>
+            <option>Books</option><option>Home &amp; Garden</option><option>Beauty</option>
+            <option>Furniture</option><option>Sports</option><option>Toys</option><option>Food</option>
+          </select>
+        </div>
+        <div class="fg"><label>Price ($)</label><input type="number" id="product_price" min="1" step="0.01"></div>
+      </div>
+      <div class="row2">
+        <div class="fg"><label>Rating (1–5)</label><input type="number" id="product_rating" min="1" max="5" step="0.1"></div>
+        <div class="fg"><label>Hist. Return Rate (%)</label><input type="number" id="product_return_rate" min="0" max="100"></div>
+      </div>
+
+      <div class="sec-label">Order</div>
+      <div class="row2">
+        <div class="fg"><label>Discount (%)</label><input type="number" id="discount_pct" min="0" max="100"></div>
+        <div class="fg"><label>Delivery Delay (days)</label><input type="number" id="delivery_delay_days"></div>
+      </div>
+      <div class="row2">
+        <div class="fg">
+          <label>Payment Method</label>
+          <select id="payment_method">
+            <option value="credit_card">Credit Card</option>
+            <option value="debit_card">Debit Card</option>
+            <option value="paypal">PayPal</option>
+            <option value="buy_now_pay_later">Buy Now Pay Later</option>
+            <option value="bank_transfer">Bank Transfer</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Shipping</label>
+          <select id="shipping_method">
+            <option value="standard">Standard</option>
+            <option value="express">Express</option>
+            <option value="overnight">Overnight</option>
+            <option value="economy">Economy</option>
+          </select>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">Gift Purchase</span>
+        <div class="tog" id="is_gift_toggle" onclick="this.classList.toggle('on')"></div>
+      </div>
+
+      <button class="btn-analyze" id="analyzeBtn" onclick="analyze()">Analyze Return Risk</button>
+    </div>
+  </div>
+
+  <!-- ── RIGHT: Results ── -->
+  <div class="card">
+    <div class="card-header">
+      <h2>Risk Analysis</h2>
+      <span id="results-status" style="font-size:.7rem;color:#94A3B8">Awaiting analysis</span>
+    </div>
+    <div id="resultsBody">
+      <div class="placeholder">
+        <div class="ico">🛡️</div>
+        <p>Select a scenario and click <strong>Analyze Return Risk</strong></p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── Scenario presets ──────────────────────────────────────────────────────
+const SCENARIOS = {
+  high: {
+    customer_age_days:180, customer_return_rate:35, customer_total_orders:8, customer_avg_order_value:65,
+    product_category:'Clothing', product_price:89.99, product_rating:3.2, product_return_rate:28,
+    discount_pct:25, delivery_delay_days:2, payment_method:'credit_card', shipping_method:'standard', is_gift:false,
+  },
+  medium: {
+    customer_age_days:450, customer_return_rate:15, customer_total_orders:22, customer_avg_order_value:85,
+    product_category:'Electronics', product_price:149.99, product_rating:4.1, product_return_rate:14,
+    discount_pct:10, delivery_delay_days:0, payment_method:'paypal', shipping_method:'express', is_gift:false,
+  },
+  low: {
+    customer_age_days:1200, customer_return_rate:5, customer_total_orders:64, customer_avg_order_value:120,
+    product_category:'Books', product_price:24.99, product_rating:4.7, product_return_rate:4,
+    discount_pct:0, delivery_delay_days:-1, payment_method:'credit_card', shipping_method:'standard', is_gift:true,
+  },
+};
+
+// ── Simulated responses (used when API is unreachable) ────────────────────
+const SIM = {
+  high: {
+    order_id:'ORD-DEMO-HIGH', return_probability:0.73, risk_level:'HIGH', expected_return_cost:24.50,
+    top_risk_factors:[
+      {feature:'customer_return_rate',  description:'Customer historical return rate', impact:0.182, direction:'increases'},
+      {feature:'product_category',      description:'Product category (Clothing)',     impact:0.143, direction:'increases'},
+      {feature:'delivery_delay_days',   description:'Delivery delay (days)',            impact:0.112, direction:'increases'},
+      {feature:'discount_pct',          description:'Discount percentage applied',      impact:0.089, direction:'increases'},
+      {feature:'product_rating',        description:'Product average rating',           impact:0.064, direction:'decreases'},
+    ],
+    recommendations:[
+      'Flag for manual review before processing — high return risk detected.',
+      'Require signature on delivery to confirm receipt.',
+      'Include a personalised thank-you note — this customer returns frequently.',
+      'Include a detailed product-fit / setup guide to reduce misuse-driven returns.',
+    ],
+    model_info:{name:'CatBoostClassifier',version:'1.0.0',trained_at:'2026-06-29T10:00:00'},
+  },
+  medium: {
+    order_id:'ORD-DEMO-MED', return_probability:0.41, risk_level:'MEDIUM', expected_return_cost:13.50,
+    top_risk_factors:[
+      {feature:'product_return_rate',   description:'Product historical return rate',  impact:0.121, direction:'increases'},
+      {feature:'customer_return_rate',  description:'Customer historical return rate',  impact:0.098, direction:'increases'},
+      {feature:'is_high_value_product', description:'High-value product (>$100)',       impact:0.075, direction:'increases'},
+      {feature:'seller_return_rate',    description:'Seller historical return rate',     impact:0.038, direction:'increases'},
+      {feature:'customer_total_orders', description:'Customer total orders placed',      impact:0.031, direction:'decreases'},
+    ],
+    recommendations:[
+      'Moderate risk — send proactive shipment tracking and satisfaction check-in.',
+      'Include a detailed product-fit / setup guide to reduce misuse-driven returns.',
+      'Include a personalised thank-you note — this customer returns frequently.',
+    ],
+    model_info:{name:'CatBoostClassifier',version:'1.0.0',trained_at:'2026-06-29T10:00:00'},
+  },
+  low: {
+    order_id:'ORD-DEMO-LOW', return_probability:0.08, risk_level:'LOW', expected_return_cost:2.10,
+    top_risk_factors:[
+      {feature:'customer_return_rate',  description:'Customer historical return rate',  impact:0.043, direction:'decreases'},
+      {feature:'product_return_rate',   description:'Product historical return rate',   impact:0.038, direction:'decreases'},
+      {feature:'is_gift',               description:'Gift purchase',                    impact:0.029, direction:'decreases'},
+      {feature:'customer_total_orders', description:'Customer total orders placed',      impact:0.022, direction:'decreases'},
+      {feature:'customer_age_days',     description:'Customer account age (days)',       impact:0.018, direction:'decreases'},
+    ],
+    recommendations:['Low risk — standard fulfillment recommended.'],
+    model_info:{name:'CatBoostClassifier',version:'1.0.0',trained_at:'2026-06-29T10:00:00'},
+  },
+};
+
+let currentScenario = 'high';
+
+function loadScenario(name, btn) {
+  currentScenario = name;
+  document.querySelectorAll('.sc-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const s = SCENARIOS[name];
+  for (const [k, v] of Object.entries(s)) {
+    if (k === 'is_gift') {
+      document.getElementById('is_gift_toggle').classList.toggle('on', v);
+    } else {
+      const el = document.getElementById(k);
+      if (el) el.value = v;
+    }
+  }
+  document.getElementById('resultsBody').innerHTML = `
+    <div class="placeholder"><div class="ico">🛡️</div>
+    <p>Click <strong>Analyze Return Risk</strong> to score this order</p></div>`;
+  document.getElementById('results-status').textContent = 'Awaiting analysis';
+}
+
+function buildPayload() {
+  const price = parseFloat(document.getElementById('product_price').value) || 50;
+  const disc  = parseFloat(document.getElementById('discount_pct').value) || 0;
+  return {
+    customer:{
+      customer_id:'DEMO-CUST-001',
+      age_days: parseInt(document.getElementById('customer_age_days').value)||365,
+      return_rate: (parseFloat(document.getElementById('customer_return_rate').value)||10)/100,
+      total_orders: parseInt(document.getElementById('customer_total_orders').value)||5,
+      avg_order_value: parseFloat(document.getElementById('customer_avg_order_value').value)||75,
+    },
+    product:{
+      product_id:'DEMO-PROD-001',
+      category: document.getElementById('product_category').value,
+      price,
+      rating: parseFloat(document.getElementById('product_rating').value)||4,
+      historical_return_rate: (parseFloat(document.getElementById('product_return_rate').value)||15)/100,
+    },
+    seller:{seller_id:'DEMO-SELL-001',rating:4.0,return_rate:0.15,total_orders:5000},
+    order:{
+      order_id:`ORD-${Date.now()}`,
+      order_value: price*(1-disc/100),
+      discount_pct: disc,
+      quantity:1,
+      is_gift: document.getElementById('is_gift_toggle').classList.contains('on'),
+      payment_method: document.getElementById('payment_method').value,
+      shipping_method: document.getElementById('shipping_method').value,
+      delivery_delay_days: parseInt(document.getElementById('delivery_delay_days').value)||0,
+    },
+  };
+}
+
+async function analyze() {
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Analyzing…';
+
+  let result = null, simulated = false;
+  try {
+    const resp = await fetch('/api/v1/predict', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(buildPayload()),
+      signal:AbortSignal.timeout(5000),
+    });
+    if (resp.ok) result = await resp.json(); else throw new Error();
+  } catch {
+    result = SIM[currentScenario];
+    simulated = true;
+  }
+
+  renderResults(result, simulated);
+  btn.disabled = false;
+  btn.textContent = 'Analyze Return Risk';
+}
+
+function renderResults(r, simulated) {
+  const pct = Math.round(r.return_probability * 100);
+  const colorMap = {LOW:'#10B981',MEDIUM:'#F59E0B',HIGH:'#EF4444'};
+  const color = colorMap[r.risk_level];
+  const badgeCls = {LOW:'risk-low',MEDIUM:'risk-med',HIGH:'risk-high'}[r.risk_level];
+
+  const maxImp = Math.max(...r.top_risk_factors.map(f=>f.impact));
+  const factors = r.top_risk_factors.map(f=>`
+    <div class="factor-row">
+      <div class="factor-name" title="${f.description}">${f.description}</div>
+      <div class="bar-wrap"><div class="bar ${f.direction==='increases'?'up':'down'}" data-w="${Math.round(f.impact/maxImp*100)}"></div></div>
+      <div class="factor-val" style="color:${f.direction==='increases'?'#EF4444':'#10B981'}">
+        ${f.direction==='increases'?'+':'−'}${f.impact.toFixed(3)}
+      </div>
+    </div>`).join('');
+
+  const recs = r.recommendations.map((t,i)=>`
+    <div class="rec-item"><div class="rec-num">${i+1}</div><span>${t}</span></div>`).join('');
+
+  const banner = simulated
+    ? `<div class="sim-banner" style="margin-bottom:.9rem">
+        ⚡ <strong>Simulated result</strong> — API not reachable or model not trained.
+        Run <code>python train_model.py</code> then <code>python run.py</code> for live predictions.
+       </div>` : '';
+
+  document.getElementById('results-status').textContent = simulated ? '⚡ Simulated' : '✓ Live prediction';
+
+  document.getElementById('resultsBody').innerHTML = `
+    ${simulated ? '<div style="padding:.75rem 1.25rem 0">'+banner+'</div>' : ''}
+
+    <div class="gauge-section">
+      <div class="gauge-wrap">
+        <svg width="190" height="105" viewBox="0 0 190 105">
+          <path d="M 15 97 A 80 80 0 0 1 175 97" fill="none" stroke="#E2E8F0" stroke-width="13" stroke-linecap="round"/>
+          <path id="gaugeFill" d="M 15 97 A 80 80 0 0 1 175 97" fill="none" stroke="${color}"
+            stroke-width="13" stroke-linecap="round"
+            stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+        </svg>
+        <div class="gauge-text">
+          <div class="gauge-pct" style="color:${color}" id="gaugePct">0%</div>
+        </div>
+      </div>
+      <div class="risk-badge ${badgeCls}">${r.risk_level} RISK</div>
+      <div class="cost-pill">Expected Return Cost: <strong>$${r.expected_return_cost.toFixed(2)}</strong></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Top Risk Factors (SHAP)</div>
+      ${factors}
+      <div style="font-size:.65rem;color:#94A3B8;margin-top:.5rem">Red = increases risk · Green = decreases risk</div>
+    </div>
+
+    <div class="recs-section">
+      <div class="section-title">Actionable Recommendations</div>
+      ${recs}
+    </div>
+
+    <div class="model-meta">
+      <span>Model: ${r.model_info.name} v${r.model_info.version}</span>
+      <span>Order ID: ${r.order_id}</span>
+    </div>`;
+
+  // Animate gauge arc
+  const arc = document.getElementById('gaugeFill');
+  setTimeout(()=>{
+    arc.style.transition='stroke-dashoffset 1s cubic-bezier(.4,0,.2,1)';
+    arc.style.strokeDashoffset = 251.2*(1-r.return_probability);
+  }, 60);
+
+  // Count-up
+  const pctEl = document.getElementById('gaugePct');
+  let t0 = null;
+  (function tick(ts){
+    if(!t0) t0=ts;
+    const p = Math.min((ts-t0)/1000, 1);
+    pctEl.textContent = Math.round(p*pct)+'%';
+    if(p<1) requestAnimationFrame(tick);
+  })(performance.now());
+
+  // Animate bars
+  setTimeout(()=>{
+    document.querySelectorAll('.bar[data-w]').forEach(b=>{
+      b.style.transition='width .85s cubic-bezier(.4,0,.2,1)';
+      b.style.width=b.dataset.w+'%';
+    });
+  }, 120);
+}
+
+// Boot with high-risk scenario
+loadScenario('high', document.querySelector('.sc-btn.active'));
+</script>
+</body>
+</html>
